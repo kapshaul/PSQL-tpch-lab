@@ -1,0 +1,2 @@
+./dbgen -s 0.1 -T p -v -z 0
+sed -i 's/|$//' lineitem_z0.tbl
