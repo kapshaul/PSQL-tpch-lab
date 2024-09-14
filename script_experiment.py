@@ -92,7 +92,7 @@ def construct_join_queries(val):
             queries.append("select * from part1%s%s, supplier1%s%s, lineitem1%s%s where p_partkey = l_partkey and s_suppkey = l_suppkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q9_3R':
             # Q9_3R - TPCH Modified
-            queries.append("select * from supplier1%s%s, lineitem1%s%s, partsupp1%s%s where s_suppkey = l_suppkey and ps_suppkey = l_suppkey LIMIT 4000000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from part1%s%s, lineitem1%s%s, partsupp1%s%s where ps_partkey = l_partkey and p_partkey = l_partkey LIMIT 200000;" % (sch_val, val, sch_val, val, sch_val, val))
         else:
             sys.exit(1)
     return queries
