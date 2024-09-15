@@ -24,13 +24,10 @@ ITER_SIZE = 2000                # the number of rows per a round trip (Default =
 Z_VALAUE = str(sys.argv[2])     # z-values = {0, 1, 1_5}
 
 # Data points to store the information
-ranges = [
-    # Customized ranges (Increment size shouldn't be larger than ITER_SIZE)
-    (2000, 50000000, 2000),     # From 2000 to 100000, increment by 2000
-]
 data_points = []
-for start, stop, step in ranges:
-    data_points.extend(range(start, stop + step, step))
+for i in range(100):
+    value = ITER_SIZE * (1.3 ** i)
+    data_points.append(int(value))
 
 # Files
 file = str(sys.argv[1])             # file path,    e.g) file = 'result'
