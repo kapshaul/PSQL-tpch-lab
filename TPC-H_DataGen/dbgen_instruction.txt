@@ -1,18 +1,16 @@
 --------------------------------------------------------
 dbgen -- data creation.
+- by Bharghav -
 --------------------------------------------------------
-1. copied the dbgen folder from baktiyar.
-Path: /data/bakhtiyar-psql/data/dbgen
+1. Clone the dbgen directory.
 ./dbgen -h
 The above command is the help function.
 
 2. Inside dbgen folder, run the below command.
-
 ./dbgen -s 10.0 -z 0
+the above command will create z = 0 data with 10GB size data.
 
-the above command will create z0 data with 0.8GB size data.
-
-3. do the below command to see the first few rows of a table.
+3. Do the below command to see the first few rows of a table.
 head customer.tbl
 
 If you observe carefully, each tuple will have a "|" symbol at the end.
