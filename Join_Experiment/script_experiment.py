@@ -20,7 +20,7 @@ if len(sys.argv) != 4:
 SIGMA = .99
 TIME_LIMIT = 300                # 30 mins = 1800, 15 mins = 900, 3 mins = 180
 TEST_NUMBER = 1                 # the number of tests for each query
-ITER_SIZE = 2000                # the number of rows per a round trip (Default = 2000)
+ITER_SIZE = 100                 # the number of rows per a round trip (Default = 2000)
 Z_VALAUE = str(sys.argv[2])     # z-values = {0, 1, 1_5}
 
 # Data points to store the information
