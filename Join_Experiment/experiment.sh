@@ -8,8 +8,7 @@ path_1="test"
 path_2="OSL(L100_N500_M5000)"
 
 # Define the query and index arrays
-#queries=("Q9" "Q10" "Q11" "Q15" "Q8" "Q9_3R")
-queries=("Q9" "Q10" "Q11" "Q15")
+queries=("Q9" "Q10" "Q11" "Q15" "Q8" "Q9_3R")
 indexes=("0" "1" "1_5")
 
 # Loop through each query
