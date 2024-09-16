@@ -8,7 +8,7 @@ from time import time
 DATABASE = 'leeyongh'
 USER = 'leeyongh'
 HOST = '/tmp/'
-PORT = '5240'
+PORT = '5245'
 
 # Verify that exactly two additional command line arguments are provided
 if len(sys.argv) != 4:
@@ -18,15 +18,18 @@ if len(sys.argv) != 4:
 
 # Parameters setting
 SIGMA = .99
-TIME_LIMIT = 300                # 30 mins = 1800, 15 mins = 900, 3 mins = 180
-TEST_NUMBER = 1                 # the number of tests for each query
-ITER_SIZE = 100                 # the number of rows per a round trip (Default = 2000)
+TIME_LIMIT = 180                # 30 mins = 1800, 15 mins = 900, 3 mins = 180
+MAX_GLOBAL_RETRIES = 1          # Maximum number of retries if results differ significantly (global)
+MAX_LOCAL_RETRIES = 3           # Maximum number of retries if results differ significantly (local)
+STEP_SIZE = 1.4                 # Data point step size
+TEST_NUMBER = 1                 # The number of tests for each query
+ITER_SIZE = 100                 # The number of rows per a round trip (Default = 2000)
 Z_VALAUE = str(sys.argv[2])     # z-values = {0, 1, 1_5}
 
 # Data points to store the information
 data_points = []
 for i in range(100):
-    value = ITER_SIZE * (1.3 ** i)
+    value = ITER_SIZE * (STEP_SIZE ** i)
     data_points.append(int(value))
 
 # Files
@@ -39,19 +42,20 @@ result_data = file + '.dat'         # str(sys.argv[1]) + '.dat'
 settings = [
     'set enable_material = OFF;',
     'set max_parallel_workers_per_gather = 0;',
+    'set enable_seqscan = ON;',
     'set enable_indexonlyscan = OFF;',
     'set enable_indexscan = OFF;',
-    'set enable_block = OFF;',
     'set enable_bitmapscan = OFF;',
+    'set enable_block = OFF;',
     'set enable_fastjoin = OFF;',
-    'set enable_seqscan = OFF;',
     'set enable_fliporder = OFF;',
     
+    'set enable_nestloop = ON;',
     'set enable_hashjoin = OFF;',
-    'set enable_mergejoin = ON;',
-    'set enable_nestloop = OFF;',
-    'set work_mem = "64kB";',                 # Try to see difference varying work_mem
-    'set statement_timeout = 1800000;',       # 30 mins = 1800000
+    'set enable_mergejoin = OFF;',
+    
+    'set work_mem = "512MB";',                 # Try to see difference varying work_mem
+    'set statement_timeout = 1800000;',        # 30 mins = 1800000
     ]
 
 
@@ -120,7 +124,7 @@ def join_query(server_cur, log, itersize):
                 log.write("%d, %f, %f\n"% (fetched_count, cumulative_time, weighted_time))
                 result.append((fetched_count, cumulative_time, weighted_time))
                 idx += 1
-            if (cumulative_time >= TIME_LIMIT) or (idx >= 50):
+            if (cumulative_time >= TIME_LIMIT) or (idx >= 100):
                 break
             
     # Print the result
@@ -145,7 +149,7 @@ def cursor_server(conn, Query):
             with conn.cursor(name='cur_uniq') as server_cur:
                 # Set the number of rows per a round trip with the server
                 server_cur.itersize = ITER_SIZE
-                
+
                 print("Executing the query for the " + str(i + 1) + "-th time")
                 start_time = time()
                 # Execute the query
@@ -194,7 +198,7 @@ def summary_queries(summary, avg_results):
     summary.write("\n-- Average Execution Times Across Queries: A Summary --\n")
     with open(result_data, 'w+') as data:
         for k in sorted(avg_results.keys()):
-            if len(avg_results[k]['weighted']) >= 2:
+            if len(avg_results[k]['unweighted']) >= 2:
                 avg_unweighted = sum(avg_results[k]['unweighted']) / len(avg_results[k]['unweighted']) if avg_results[k]['unweighted'] else 0
                 avg_weighted = sum(avg_results[k]['weighted']) / len(avg_results[k]['weighted']) if avg_results[k]['weighted'] else 0
                 # Updated format
@@ -204,9 +208,14 @@ def summary_queries(summary, avg_results):
                 break
 
 # Merge the results
-def merge_dicts(d1, d2):
+def merge_dicts(d1, d2, option='intersection'):
     result = {}
-    keys = set(d1.keys()).union(d2.keys())        
+
+    if option == 'union':
+        keys = set(d1.keys()).union(d2.keys())
+    else:
+        keys = set(d1.keys()).intersection(d2.keys())
+
     for key in keys:
         if key in d1 and key in d2:
             if isinstance(d1[key], dict) and isinstance(d2[key], dict):
@@ -230,22 +239,52 @@ if __name__ == '__main__':
         # Connect to your PostgreSQL database
         conn = psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT)
         #conn.autocommit = True
-        
-        # Create a client-side cursor object
-        with conn.cursor() as cur:
-            avg_results = {}
-            # Setting
-            for setting in settings:
-                cur.execute(setting)
-            # Create a server-side cursor object
-            for Query in Queries:
-                test_results = cursor_server(conn, Query)
-                Q_result = summary_tests(summary, test_results, Query)
-                avg_results = merge_dicts(avg_results, Q_result)
+
+        for retries_global in range(MAX_GLOBAL_RETRIES):
+            try:
+                avg_results, summary_results = {}, {}  # Reset results
                 
-        # The test is done, summarize the results
-        summary_queries(summary, avg_results)
+                # Create a client-side cursor object
+                with conn.cursor() as cur:
+                    # Apply settings
+                    for setting in settings:
+                        cur.execute(setting)
+
+                    # Create a server-side cursor object
+                    for Query in Queries:
+                        retries_local = 0  # Local retry counter for each query
+
+                        # Retry mechanism for each query
+                        while retries_local < MAX_LOCAL_RETRIES:
+                            results = cursor_server(conn, Query)
+                            summary_results = summary_tests(summary, results, Query)
+                            # If the keys are matching, we break out of the inner loop and move to the next query
+                            # At the end of the global trial, just collect the results whatever it would get.
+                            if (not avg_results) or (retries_global == MAX_GLOBAL_RETRIES - 1):
+                                avg_results = merge_dicts(avg_results, summary_results, 'union')
+                                break
+                            else:
+                                diff = abs(len(avg_results) - len(summary_results))
+                                if diff <= 1:
+                                    avg_results = merge_dicts(avg_results, summary_results)
+                                    break
+                            # If keys do not match, increment retries and try again
+                            retries_local += 1
+
+                        if retries_local >= MAX_LOCAL_RETRIES:
+                            print("Max retries reached for query, restarting.\n")
+                            raise Exception("Restart from beginning")  # Raise an exception to restart from the beginning
+                        
+                # The test is done, summarize the results
+                summary_queries(summary, avg_results)
+                break
+
+            except Exception as e:
+                print(e)
         
+        if retries_global == MAX_GLOBAL_RETRIES - 1:
+            print("\nMax global retries reached for query, stopping.")
+
     except Exception as e:
         print("An error occurred: {}".format(e))
     finally:
