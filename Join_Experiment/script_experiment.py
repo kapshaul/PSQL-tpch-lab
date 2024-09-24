@@ -282,7 +282,7 @@ if __name__ == '__main__':
             except Exception as e:
                 print(e)
         
-        if retries_global == MAX_GLOBAL_RETRIES - 1:
+        if (retries_global == MAX_GLOBAL_RETRIES - 1) or (retries_global != 0):
             print("\nMax global retries reached for query, stopping.")
 
     except Exception as e:
