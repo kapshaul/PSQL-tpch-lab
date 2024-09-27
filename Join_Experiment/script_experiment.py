@@ -33,10 +33,11 @@ for i in range(100):
     data_points.append(int(value))
 
 # Files
-file = str(sys.argv[1])             # file path,    e.g) file = 'result'
-result_log = file + '.log'          # str(sys.argv[1]) + '.log'
-result_summary = file + '.txt'      # str(sys.argv[1]) + '.txt'
-result_data = file + '.dat'         # str(sys.argv[1]) + '.dat'
+file = str(sys.argv[1])                     # file path,    e.g) file = 'result'
+result_log = file + '.log'                  # str(sys.argv[1]) + '.log'
+result_summary = file + '.txt'              # str(sys.argv[1]) + '.txt'
+result_data_unweight = file + '.dat'        # str(sys.argv[1]) + '.dat'
+result_data_weight = file + '_weight.dat'   # str(sys.argv[1]) + '.dat'
 
 # Test enviroment setting
 settings = [
@@ -71,7 +72,7 @@ def construct_join_queries(val):
             # Q10 - TPCH
             queries.append("select * from customer1%s%s, order1%s%s where c_custkey = o_custkey LIMIT 8000;" % (sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q11':           
-            # Q11 - TPCH
+            # Q11(Modified) - TPCH
             queries.append("select * from order1%s%s, lineitem1%s%s where o_orderdate = l_shipdate LIMIT 150000;" % (sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q12':
             # Q12 - TPCH
@@ -196,14 +197,15 @@ def summary_tests(summary, test_results, Query):
 # Summarize results over different queries
 def summary_queries(summary, avg_results):
     summary.write("\n-- Average Execution Times Across Queries: A Summary --\n")
-    with open(result_data, 'w+') as data:
+    with open(result_data_unweight, 'w+') as data_unweight, open(result_data_weight, 'w+') as data_weight:
         for k in sorted(avg_results.keys()):
             if len(avg_results[k]['unweighted']) >= 2:
                 avg_unweighted = sum(avg_results[k]['unweighted']) / len(avg_results[k]['unweighted']) if avg_results[k]['unweighted'] else 0
                 avg_weighted = sum(avg_results[k]['weighted']) / len(avg_results[k]['weighted']) if avg_results[k]['weighted'] else 0
                 # Updated format
                 summary.write("K val:%i\tAverage time (unweighted): %f\tAverage time (weighted): %f\n" % (k, avg_unweighted, avg_weighted))
-                data.write("%i\t %f\n" % (k, avg_unweighted))
+                data_unweight.write("%i\t %f\n" % (k, avg_unweighted))
+                data_weight.write("%i\t %f\n" % (k, avg_weighted))
             else:
                 break
 
@@ -236,53 +238,54 @@ if __name__ == '__main__':
     summary = open(result_summary, 'w+')
     
     try:
-        # Connect to your PostgreSQL database
-        conn = psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT)
+        #conn = psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT)
         #conn.autocommit = True
 
         for retries_global in range(MAX_GLOBAL_RETRIES):
             try:
-                avg_results, summary_results = {}, {}  # Reset results
-                
-                # Create a client-side cursor object
-                with conn.cursor() as cur:
-                    # Apply settings
-                    for setting in settings:
-                        cur.execute(setting)
+                # Connect to your PostgreSQL database
+                with psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT) as conn:
+                    avg_results, summary_results = {}, {}  # Reset results
+                    
+                    # Create a client-side cursor object
+                    with conn.cursor() as cur:
+                        # Apply settings
+                        for setting in settings:
+                            cur.execute(setting)
 
-                    # Create a server-side cursor object
-                    for Query in Queries:
-                        retries_local = 0  # Local retry counter for each query
+                        # Create a server-side cursor object
+                        for Query in Queries:
+                            retries_local = 0  # Local retry counter for each query
 
-                        # Retry mechanism for each query
-                        while retries_local < MAX_LOCAL_RETRIES:
-                            results = cursor_server(conn, Query)
-                            summary_results = summary_tests(summary, results, Query)
-                            # If the keys are matching, we break out of the inner loop and move to the next query
-                            # At the end of the global trial, just collect the results whatever it would get.
-                            if (not avg_results) or (retries_global == MAX_GLOBAL_RETRIES - 1):
-                                avg_results = merge_dicts(avg_results, summary_results, 'union')
-                                break
-                            else:
-                                diff = abs(len(avg_results) - len(summary_results))
-                                if diff <= 1:
-                                    avg_results = merge_dicts(avg_results, summary_results)
+                            # Retry mechanism for each query
+                            while retries_local < MAX_LOCAL_RETRIES:
+                                results = cursor_server(conn, Query)
+                                summary_results = summary_tests(summary, results, Query)
+                                # If the keys are matching, we break out of the inner loop and move to the next query
+                                # At the end of the global trial, just collect the results whatever it would get.
+                                if (not avg_results) or (retries_global == MAX_GLOBAL_RETRIES - 1):
+                                    avg_results = merge_dicts(avg_results, summary_results, 'union')
                                     break
-                            # If keys do not match, increment retries and try again
-                            retries_local += 1
+                                else:
+                                    diff = abs(len(avg_results) - len(summary_results))
+                                    if diff <= 2:
+                                        avg_results = merge_dicts(avg_results, summary_results)
+                                        break
+                                # If keys do not match, increment retries and try again
+                                retries_local += 1
 
-                        if retries_local >= MAX_LOCAL_RETRIES:
-                            print("Max retries reached for query, restarting.\n")
-                            raise Exception("Restart from beginning")  # Raise an exception to restart from the beginning
-                        
-                # The test is done, summarize the results
-                summary_queries(summary, avg_results)
-                break
+                            if retries_local >= MAX_LOCAL_RETRIES:
+                                print("Max retries reached for query, restarting.\n")
+                                raise Exception("Restart from beginning")  # Raise an exception to restart from the beginning
+                            
+                    # The test is done, summarize the results
+                    summary_queries(summary, avg_results)
+                    break
 
             except Exception as e:
                 print(e)
-        
-        if (retries_global == MAX_GLOBAL_RETRIES - 1) or (retries_global != 0):
+                
+        if retries_global == MAX_GLOBAL_RETRIES - 1:
             print("\nMax global retries reached for query, stopping.")
 
     except Exception as e:
@@ -294,4 +297,4 @@ if __name__ == '__main__':
         if summary:
             summary.flush()
             summary.close()
-        print("The tests are finished.\n")
+        print("The test is finished.\n")
