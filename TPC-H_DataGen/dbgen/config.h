@@ -46,7 +46,6 @@
 #define PATH_SEP	'\\'
 #else
 
-#define STDLIB_HAS_GETOPT
 
 #ifdef ATT
 #define STDLIB_HAS_GETOPT
@@ -77,6 +76,17 @@
 #ifdef SUN
 #define STDLIB_HAS_GETOPT
 #endif /* SUN */
+
+#ifdef CENTOS
+#define STDLIB_HAS_GETOPT
+#endif /* CentOS */
+
+//fyu: 20190916
+//define for mac osx
+#ifdef MACOSX
+#define STDLIB_HAS_GETOPT
+#define _POSIX_SOURCE
+#endif /* MACOSX */
 
 #ifdef SGI
 #define STDLIB_HAS_GETOPT

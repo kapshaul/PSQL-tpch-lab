@@ -5,7 +5,25 @@
 #define NO_FUNC (int (*) ()) NULL	/* to clean up tdefs */
 #define NO_LFUNC (long (*) ()) NULL		/* to clean up tdefs */
 
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+
+
+
+
 #include "config.h"
+////8200 moved some header file up front
+//#include "dss.h"
+//#include "dsstypes.h"
+//#include "bcd2.h"
+////8200 -------
 #include <stdlib.h>
 #if (defined(_POSIX_)||!defined(WIN32))		/* Change for Windows NT */
 #include <unistd.h>
@@ -22,6 +40,10 @@
 #include <strings.h>
 #endif
 #if (defined(WIN32)&&!defined(_POSIX_))
+#include <process.h>
+#pragma warning(disable:4201)
+#pragma warning(disable:4214)
+#pragma warning(disable:4514)
 #define WIN32_LEAN_AND_MEAN
 #define NOATOM
 #define NOGDICAPMASKS
@@ -38,8 +60,12 @@
 #define NOCOMM
 #define NOKANJI
 #define NOMCX
+#include <windows.h>
+#pragma warning(default:4201)
+#pragma warning(default:4214)
 #endif
 
+//8200
 #include "dss.h"
 #include "dsstypes.h"
 #include "bcd2.h"
@@ -277,19 +303,24 @@ set_files (int i, int pload)
 /*
  * read the distributions needed in the benchamrk
  */
-void load_dists (void)
+void
+load_dists (void)
 {
   read_dist (env_config (DIST_TAG, DIST_DFLT), "p_cntr", &p_cntr_set);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "colors", &colors);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "p_types", &p_types_set);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "nations", &nations);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "regions", &regions);
-  read_dist (env_config (DIST_TAG, DIST_DFLT), "o_oprio", &o_priority_set);
-  read_dist (env_config (DIST_TAG, DIST_DFLT), "instruct", &l_instruct_set);
+  read_dist (env_config (DIST_TAG, DIST_DFLT), "o_oprio",
+			 &o_priority_set);
+  read_dist (env_config (DIST_TAG, DIST_DFLT), "instruct",
+			 &l_instruct_set);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "smode", &l_smode_set);
-  read_dist (env_config (DIST_TAG, DIST_DFLT), "category", &l_category_set);
+  read_dist (env_config (DIST_TAG, DIST_DFLT), "category",
+			 &l_category_set);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "rflag", &l_rflag_set);
   read_dist (env_config (DIST_TAG, DIST_DFLT), "msegmnt", &c_mseg_set);
+
 }
 
 /*
@@ -350,7 +381,7 @@ gen_tbl (int tnum, long start, long count, long upd_num)
 		case ORDER_LINE:
 		  mk_sparse (sk, i,
 					 (upd_num == 0) ? 0 : 1 + upd_num / (10000 / refresh));
-		  mk_order (sk, &o);
+		  mk_order (i, &o);
 		  /* tdefs[tnum].loader[direct] (&o, upd_num); */
 		  break;
 		case SUPP:
@@ -428,7 +459,8 @@ usage (void)
   fprintf (stderr, "-T S   -- generate partsupp ONLY\n");
   fprintf (stderr, "-U <s> -- generate <s> update sets\n");
   fprintf (stderr, "-v     -- enable VERBOSE mode\n");
-  fprintf (stderr, "-z     -- generate skewed data distributions\n");
+  //fprintf (stderr, "-z     -- **generate skewed data distributions**\n");
+  fprintf (stderr, ANSI_COLOR_RED "-z     -- **generate skewed data distributions**" ANSI_COLOR_RESET "\n");
   fprintf (stderr,
 		   "\nTo generate the SF=1 (1GB) database population , use:\n");
   fprintf (stderr, "\tdbgen -vfF -s 1\n");
@@ -446,7 +478,8 @@ usage (void)
  */
 #ifndef DOS
 
-int partial (int tbl, int s)
+int
+partial (int tbl, int s)
 {
   HUGE_T (h_rowcnt);
   HUGE_T (h_minrow);
@@ -457,7 +490,8 @@ int partial (int tbl, int s)
 
   if (verbose)
 	{
-	  fprintf (stderr, "Starting to load stage %d of %d of %s...", s + 1, children, tdefs[tbl].comment);
+	  fprintf (stderr, "Starting to load stage %d of %d of %s...",
+			   s + 1, children, tdefs[tbl].comment);
 	}
   if (load_state (scale, children, s))
 	{
@@ -465,7 +499,6 @@ int partial (int tbl, int s)
 	  fprintf (stderr, "Unable to load seeds (%s)\n", fname);
 	  exit (-1);
 	}
-
   if (direct == 0)
 	set_files (tbl, s);
 #ifndef SUPPORT_64BITS
@@ -477,7 +510,8 @@ int partial (int tbl, int s)
 	  if (step_size > MAX_32B_SCALE)
 		{
 		  fprintf (stderr, "Each child must generate less than 1TB.\n");
-		  fprintf (stderr, "Please rerun DBGEN with a larger number of children\n");
+		  fprintf (stderr,
+				   "Please rerun DBGEN with a larger number of children\n");
 		  exit (1);
 		}
 	  rowcnt = step_size * tdefs[tbl].base;
@@ -511,7 +545,8 @@ int partial (int tbl, int s)
 }
 
 
-int pload (int tbl)
+int
+pload (int tbl)
 {
   int c = 0, i, status;
   char cmdline[256];
@@ -912,7 +947,7 @@ main (int ac, char **av)
 #endif
 
   fprintf (stderr,
-		   "TPC-D Population Generator (Version %d.%d.%d%s)\n",
+		   "TPC-H Population Generator (Version %d.%d.%d%s)\n",
 		   VERSION, RELEASE, MODIFICATION, PATCH);
   fprintf (stderr, "Copyright %s %s\n", TPC, C_DATES);
 
@@ -990,7 +1025,8 @@ main (int ac, char **av)
 #ifdef DOS
 		  else
 			{
-			  fprintf (stderr, "Parallel load is not supported on your platform.\n");
+			  fprintf (stderr,
+					   "Parallel load is not supported on your platform.\n");
 			  exit (1);
 			}
 #else

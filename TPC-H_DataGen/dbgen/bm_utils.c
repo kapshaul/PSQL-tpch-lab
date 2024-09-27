@@ -20,7 +20,6 @@
  * store_state() -- store the data set configuration details
  */
 
-
 #include "dss.h"
 #include <stdio.h>
 #include <time.h>
@@ -32,7 +31,7 @@
 #include <ctype.h>
 #include <math.h>
 #ifndef _POSIX_SOURCE
-#include <stdlib.h>
+#include <malloc.h>
 #endif /* POSIX_SOURCE */
 #include <fcntl.h>
 #ifdef IBM

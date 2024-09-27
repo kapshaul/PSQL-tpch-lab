@@ -347,6 +347,9 @@ extern tdef tdefs[];
 #define	 L_LCNT_MAX	  (tdefs[LINE].base * scale)
 #define  L_LINE_SIZE  (4 * L_LCNT_MAX)
 
+#define  L_OKEY_MIN   1
+#define  L_OKEY_MAX   (long)(tdefs[ORDER].base * scale)
+
 /*
  * defines which control the time table
  */
@@ -453,7 +456,6 @@ extern tdef tdefs[];
            if (columnar) fprintf(f, "%5ld%07ld", data[1], data[0]); \
            else fprintf(f,"%ld%07ld%c", data[1], data[0], SEPARATOR)
 #else
-#define HUGE_FORMAT "%ll"
 #define PR_HUGE(f, data) \
 	fprintf(f, HUGE_FORMAT, data)
 #endif /* SUPPORT_64BITS */
@@ -541,4 +543,5 @@ extern tdef tdefs[];
 #define  BBB_CMNT_SD   46         
 #define  BBB_OFFSET_SD 47         
 #define  L_OKEY_SD  48
+#define  L_KEY_SD  49
 #endif            /* DSS_H */

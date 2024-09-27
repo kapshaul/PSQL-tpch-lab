@@ -1,8 +1,5 @@
 /* Sccsid:     @(#)print.c	9.1.1.18     12/13/95  10:56:16 */
 /* generate flat files for data load */
-#ifndef SUPPORT_64BITS
-#define DSS_HUGE long
-#endif /* SUPPORT_64BITS */
 #include <stdio.h>
 #ifndef VMS
 #include <sys/types.h>
@@ -26,7 +23,7 @@ int pr_drange PROTO((int tbl, long min, long cnt, long num));
  *	Surajit Chaudhuri, Vivek Narasayya.
  *  (Jan '99)
  */
-extern DSS_HUGE NumLineitemsGenerated;
+extern long NumLineitemsGenerated;
 
 FILE *
 print_prep(int table, int update)
@@ -96,7 +93,7 @@ pr_order(order_t *o, int mode)
         last_mode = mode;
         }
     PR_STRT(fp_o);
-    PR_HUGE(fp_o, o->okey);
+    PR_INT(fp_o, o->okey);
     PR_INT(fp_o, o->custkey);
     PR_CHR(fp_o, o->orderstatus);
     PR_MONEY(fp_o, o->totalprice);
@@ -135,7 +132,7 @@ pr_line(order_t *o, int mode)
     for (i = 0; i < o->lines; i++)
         {
         PR_STRT(fp_l);
-        PR_HUGE(fp_l, o->l[i].okey);
+        PR_INT(fp_l, o->l[i].okey);
         PR_INT(fp_l, o->l[i].partkey);
         PR_INT(fp_l, o->l[i].suppkey);
         PR_INT(fp_l, o->l[i].lcnt);
