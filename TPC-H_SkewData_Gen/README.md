@@ -17,6 +17,8 @@ For query loading and processing, the `|` at the end is not required. So, we nee
 
 After running the above command, we can see that `|` is removed for all the tuples in all the tables.
 
+Or you can run the script `remove.sh` for multiple tables.
+
 I just copied all the tables of z0 to new folder as below:
 
 `cp /data/bharghav-psql/data/dbgen/*.tbl /data/bharghav-psql/data/data_800MB/z0`
