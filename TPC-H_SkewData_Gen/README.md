@@ -24,15 +24,5 @@ I just copied all the tables of z0 to new folder as below:
 `cp /data/bharghav-psql/data/dbgen/*.tbl /data/bharghav-psql/data/data_800MB/z0`
 
 ## 5. Shuffle each table as below. If you do not shuffle, the tuples will be in sorted order.
-```bash
-python3 shuffleLines.py customer.tbl
-python3 shuffleLines.py supplier.tbl
-python3 shuffleLines.py region.tbl
-python3 shuffleLines.py partsupp.tbl
-python3 shuffleLines.py part.tbl
-python3 shuffleLines.py order.tbl
-python3 shuffleLines.py nation.tbl
-python3 shuffleLines.py lineitem.tbl
-```
 
-You can also run the script `shuffle_tables.sh` for multiple tables.
+Run the script `shuffle_tables.sh` for multiple tables.
