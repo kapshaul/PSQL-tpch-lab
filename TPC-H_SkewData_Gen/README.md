@@ -34,3 +34,5 @@ python3 shuffleLines.py order.tbl
 python3 shuffleLines.py nation.tbl
 python3 shuffleLines.py lineitem.tbl
 ```
+
+You can also run the script `shuffle_tables.sh` for multiple tables.
