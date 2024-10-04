@@ -19,9 +19,8 @@ if len(sys.argv) != 4:
 # Parameters setting
 SIGMA = .99
 TIME_LIMIT = 180                # 30 mins = 1800, 15 mins = 900, 3 mins = 180
-MAX_GLOBAL_RETRIES = 1          # Maximum number of retries if results differ significantly (global)
-MAX_LOCAL_RETRIES = 3           # Maximum number of retries if results differ significantly (local)
-STEP_SIZE = 1.4                 # Data point step size
+MAX_GLOBAL_RETRIES = 3          # Maximum number of retries if results differ significantly
+STEP_SIZE = 1.5                 # Data point step size (Exponent part should be greater than 1)
 TEST_NUMBER = 1                 # The number of tests for each query
 ITER_SIZE = 100                 # The number of rows per a round trip (Default = 2000)
 Z_VALAUE = str(sys.argv[2])     # z-values = {0, 1, 1_5}
@@ -55,7 +54,7 @@ settings = [
     'set enable_hashjoin = OFF;',
     'set enable_mergejoin = OFF;',
     
-    'set work_mem = "512MB";',                 # Try to see difference varying work_mem
+    'set work_mem = "64MB";',                  # Try to see difference varying work_mem
     'set statement_timeout = 1800000;',        # 30 mins = 1800000
     ]
 
@@ -85,16 +84,16 @@ def construct_join_queries(val):
             queries.append("select * from part1%s%s, supplier1%s%s, partsupp1%s%s where p_partkey = ps_partkey and s_suppkey = ps_suppkey LIMIT 8000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q3':
             # Q3 - TPCH
-            queries.append("select * from customer1%s%s, order1%s%s, lineitem1%s%s where c_custkey = o_custkey and l_orderkey = o_orderkey LIMIT 30000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from customer1%s%s, order1%s%s, lineitem1%s%s where c_custkey = o_custkey and o_orderkey = l_orderkey LIMIT 30000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q5':
             # Q5 - TPCH Modified
-            queries.append("select * from lineitem1%s%s, order1%s%s, supplier1%s%s where l_orderkey = o_orderkey and l_suppkey = s_suppkey LIMIT 30000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from lineitem1%s%s, order1%s%s, supplier1%s%s where o_orderkey = l_orderkey and s_suppkey = l_suppkey LIMIT 30000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q8':
             # Q8 - TPCH Modified
             queries.append("select * from part1%s%s, supplier1%s%s, lineitem1%s%s where p_partkey = l_partkey and s_suppkey = l_suppkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q9_3R':
             # Q9_3R - TPCH Modified
-            queries.append("select * from part1%s%s, lineitem1%s%s, partsupp1%s%s where ps_partkey = l_partkey and p_partkey = l_partkey LIMIT 200000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from part1%s%s, partsupp1%s%s, lineitem1%s%s where ps_partkey = l_partkey and p_partkey = l_partkey LIMIT 200000;" % (sch_val, val, sch_val, val, sch_val, val))
         else:
             sys.exit(1)
     return queries
