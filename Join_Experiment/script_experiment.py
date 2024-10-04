@@ -242,6 +242,17 @@ if __name__ == '__main__':
         #conn.autocommit = True
 
         for retries_global in range(MAX_GLOBAL_RETRIES):
+# The main code
+if __name__ == '__main__':
+    # Create SQL query
+    Queries = construct_join_queries(Z_VALAUE)
+    summary = open(result_summary, 'w+')
+    
+    try:
+        #conn = psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT)
+        #conn.autocommit = True
+
+        for retries_global in range(MAX_GLOBAL_RETRIES):
             try:
                 # Connect to your PostgreSQL database
                 with psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT) as conn:
@@ -255,28 +266,18 @@ if __name__ == '__main__':
 
                         # Create a server-side cursor object
                         for Query in Queries:
-                            retries_local = 0  # Local retry counter for each query
+                            results = cursor_server(conn, Query)
+                            summary_results = summary_tests(summary, results, Query)
 
-                            # Retry mechanism for each query
-                            while retries_local < MAX_LOCAL_RETRIES:
-                                results = cursor_server(conn, Query)
-                                summary_results = summary_tests(summary, results, Query)
-                                # If the keys are matching, we break out of the inner loop and move to the next query
-                                # At the end of the global trial, just collect the results whatever it would get.
-                                if (not avg_results) or (retries_global == MAX_GLOBAL_RETRIES - 1):
-                                    avg_results = merge_dicts(avg_results, summary_results, 'union')
-                                    break
+                            if (not avg_results) or (retries_global == MAX_GLOBAL_RETRIES - 1):
+                                avg_results = merge_dicts(avg_results, summary_results, 'union')
+                            else:
+                                diff = abs(len(avg_results) - len(summary_results))
+                                if diff <= 2:
+                                    avg_results = merge_dicts(avg_results, summary_results)
                                 else:
-                                    diff = abs(len(avg_results) - len(summary_results))
-                                    if diff <= 2:
-                                        avg_results = merge_dicts(avg_results, summary_results)
-                                        break
-                                # If keys do not match, increment retries and try again
-                                retries_local += 1
-
-                            if retries_local >= MAX_LOCAL_RETRIES:
-                                print("Max retries reached for query, restarting.\n")
-                                raise Exception("Restart from beginning")  # Raise an exception to restart from the beginning
+                                    # Raise an exception to restart from the beginning
+                                    raise Exception("Results differ significantly restart from beginning")  
                             
                     # The test is done, summarize the results
                     summary_queries(summary, avg_results)
@@ -284,12 +285,14 @@ if __name__ == '__main__':
 
             except Exception as e:
                 print(e)
+            finally:
+                # Close the connection
+                if conn:
+                    conn.close()
                 
         if retries_global == MAX_GLOBAL_RETRIES - 1:
             print("\nMax global retries reached for query, stopping.")
 
-    except Exception as e:
-        print("An error occurred: {}".format(e))
     finally:
         # Close the connection
         if conn:
