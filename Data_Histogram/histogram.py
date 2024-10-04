@@ -7,26 +7,26 @@ from collections import Counter
 # List of items with their index, key name, and associated table
 items = [
     # Q9
-    #(0, 'ps_partkey', 'partsupp'),
-    #(1, 'l_partkey', 'lineitem'),
+    (0, 'ps_partkey', 'partsupp'),
+    (1, 'l_partkey', 'lineitem'),
     # Q10
-    #(0, 'c_custkey', 'customer'),
-    #(1, 'o_custkey', 'order'),
+    (0, 'c_custkey', 'customer'),
+    (1, 'o_custkey', 'order'),
     # Q11 - Modified
-    #(4, 'o_orderdate', 'order'),
-    #(10, 'l_shipdate', 'lineitem'),
+    (4, 'o_orderdate', 'order'),
+    (10, 'l_shipdate', 'lineitem'),
     # Q12
     (0, 'o_orderkey', 'order'),
     (0, 'l_orderkey', 'lineitem'),
     # Q15
-    #(0, 's_suppkey', 'supplier'),
-    #(2, 'l_suppkey', 'lineitem'),
+    (0, 's_suppkey', 'supplier'),
+    (2, 'l_suppkey', 'lineitem'),
 ]
 
 z_val = ['z0', 'z1', 'z1_5']
 
 # Define the number of rows to plot histogram
-row_n = 100000
+row_n = 200000
 
 # Function to determine if the entire column is numeric or not
 def is_column_numeric(series):
@@ -44,9 +44,11 @@ for column, key, table in items:
     # Looping through different distribution
     for z in z_val:        
         # Define the file path
-        file_path = '/data/leeyongh-psql/Data/TPCH_10GB/' + z + '/' + table + '.tbl'
-        print("Start, " + key + '_' + z)
+        file_path = '/data/leeyongh-psql/Data/TPC-H/' + z + '/' + table + '.tbl'
+        output_dir = './' + z
 
+        print("Start, " + key + '_' + z)
+        
         # Load the TBL file with '|' delimiter and no header
         data = pd.read_csv(file_path, delimiter='|', header=None)
         # Select the column data up to the defined number of rows
@@ -64,7 +66,6 @@ for column, key, table in items:
             unique_values = int(len(set(hist_data)))
 
         # Create the directory if it doesn't exist
-        output_dir = './' + z
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -74,5 +75,5 @@ for column, key, table in items:
         plt.xlabel('Values')
         plt.title(key + '_' + z)
 
-        plt.savefig('./' + z + '/' + key + '_' + z + '.png')
+        plt.savefig(output_dir + '/' + key + '_' + z + '.png')
         print("Complete, " + key + '_' + z)
