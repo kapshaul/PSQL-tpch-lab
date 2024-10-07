@@ -19,6 +19,7 @@ if len(sys.argv) != 4:
 # Parameters setting
 SIGMA = .99
 TIME_LIMIT = 180                # 30 mins = 1800, 15 mins = 900, 3 mins = 180
+DATA_LIMIT = 100                # Limit the number of data points
 MAX_GLOBAL_RETRIES = 3          # Maximum number of retries if results differ significantly
 STEP_SIZE = 1.5                 # Data point step size (Exponent part should be greater than 1)
 TEST_NUMBER = 1                 # The number of tests for each query
@@ -124,7 +125,7 @@ def join_query(server_cur, log, itersize):
                 log.write("%d, %f, %f\n"% (fetched_count, cumulative_time, weighted_time))
                 result.append((fetched_count, cumulative_time, weighted_time))
                 idx += 1
-            if (cumulative_time >= TIME_LIMIT) or (idx >= 100):
+            if (cumulative_time >= TIME_LIMIT) or (idx >= DATA_LIMIT):
                 break
             
     # Print the result
