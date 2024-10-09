@@ -242,17 +242,6 @@ if __name__ == '__main__':
         #conn.autocommit = True
 
         for retries_global in range(MAX_GLOBAL_RETRIES):
-# The main code
-if __name__ == '__main__':
-    # Create SQL query
-    Queries = construct_join_queries(Z_VALAUE)
-    summary = open(result_summary, 'w+')
-    
-    try:
-        #conn = psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT)
-        #conn.autocommit = True
-
-        for retries_global in range(MAX_GLOBAL_RETRIES):
             try:
                 # Connect to your PostgreSQL database
                 with psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT) as conn:
