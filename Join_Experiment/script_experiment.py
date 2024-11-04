@@ -50,11 +50,11 @@ settings = [
     'set enable_block = OFF;',
     'set enable_fastjoin = OFF;',
     'set enable_fliporder = OFF;',
-    
+
     'set enable_nestloop = ON;',
     'set enable_hashjoin = OFF;',
     'set enable_mergejoin = OFF;',
-    
+
     'set work_mem = "64MB";',                  # Try to see difference varying work_mem
     'set statement_timeout = 1800000;',        # 30 mins = 1800000
     ]
@@ -67,34 +67,37 @@ def construct_join_queries(val):
     for sch_val in sch_vals:
         if str(sys.argv[3]) == 'Q9':
             # Q9 - TPCH
-            queries.append("select * from partsupp1%s%s, lineitem1%s%s where ps_partkey = l_partkey LIMIT 120000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from partsupp1%s%s, lineitem1%s%s where ps_partkey = l_partkey LIMIT 240000;" % (sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q10':
             # Q10 - TPCH
-            queries.append("select * from customer1%s%s, order1%s%s where c_custkey = o_custkey LIMIT 8000;" % (sch_val, val, sch_val, val))
-        elif str(sys.argv[3]) == 'Q11':           
+            queries.append("select * from customer1%s%s, order1%s%s where c_custkey = o_custkey LIMIT 15000;" % (sch_val, val, sch_val, val))
+        elif str(sys.argv[3]) == 'Q11':
             # Q11(Modified) - TPCH
-            queries.append("select * from order1%s%s, lineitem1%s%s where o_orderdate = l_shipdate LIMIT 150000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from order1%s%s, lineitem1%s%s where o_orderdate = l_shipdate LIMIT 13000000;" % (sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q12':
             # Q12 - TPCH
-            queries.append("select * from order1%s%s, lineitem1%s%s where o_orderkey = l_orderkey LIMIT 30000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from order1%s%s, lineitem1%s%s where o_orderkey = l_orderkey LIMIT 60000;" % (sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q15':
             # Q15 - TPCH
-            queries.append("select * from supplier1%s%s, lineitem1%s%s where s_suppkey = l_suppkey LIMIT 30000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from supplier1%s%s, lineitem1%s%s where s_suppkey = l_suppkey LIMIT 60000;" % (sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q2':
             # Q2 - TPCH
             queries.append("select * from part1%s%s, supplier1%s%s, partsupp1%s%s where p_partkey = ps_partkey and s_suppkey = ps_suppkey LIMIT 8000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q3':
             # Q3 - TPCH
-            queries.append("select * from customer1%s%s, order1%s%s, lineitem1%s%s where c_custkey = o_custkey and o_orderkey = l_orderkey LIMIT 30000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from customer1%s%s, order1%s%s, lineitem1%s%s where c_custkey = o_custkey and o_orderkey = l_orderkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q5':
-            # Q5 - TPCH Modified
-            queries.append("select * from lineitem1%s%s, order1%s%s, supplier1%s%s where o_orderkey = l_orderkey and s_suppkey = l_suppkey LIMIT 30000;" % (sch_val, val, sch_val, val, sch_val, val))
+            # Q5 - TPCH
+            queries.append("select * from order1%s%s, supplier1%s%s, lineitem1%s%s where s_suppkey = l_suppkey and o_orderkey = l_orderkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q8':
-            # Q8 - TPCH Modified
+            # Q8 - TPCH
             queries.append("select * from part1%s%s, supplier1%s%s, lineitem1%s%s where p_partkey = l_partkey and s_suppkey = l_suppkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
         elif str(sys.argv[3]) == 'Q9_3R':
-            # Q9_3R - TPCH Modified
-            queries.append("select * from part1%s%s, partsupp1%s%s, lineitem1%s%s where ps_partkey = l_partkey and p_partkey = l_partkey LIMIT 200000;" % (sch_val, val, sch_val, val, sch_val, val))
+            # Q9_3R - TPCH
+            queries.append("select * from supplier1%s%s, partsupp1%s%s, lineitem1%s%s where s_suppkey = l_suppkey and ps_suppkey = l_suppkey LIMIT 4800000;" % (sch_val, val, sch_val, val, sch_val, val))
+        elif str(sys.argv[3]) == 'test':
+            # test - TPCH
+            queries.append("select * from part1%s%s, supplier1%s%s, lineitem1%s%s where l_suppkey = s_suppkey and l_partkey = p_partkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
         else:
             sys.exit(1)
     return queries
@@ -111,23 +114,23 @@ def join_query(server_cur, log, itersize):
     cumulative_time = 0
     idx = 0
     result = []
-    
+
     for _ in server_cur:
         fetched_count += 1
         current_time = time()
         weighted_time += (current_time - prev_time) * factor
         prev_time = current_time
         factor *= SIGMA
-        
+
         if fetched_count % itersize == 0:
             cumulative_time = time() - start_time
             if fetched_count >= data_points[idx]:
-                log.write("%d, %f, %f\n"% (fetched_count, cumulative_time, weighted_time))
+                log.write("%d, %f, %f\n" % (fetched_count, cumulative_time, weighted_time))
                 result.append((fetched_count, cumulative_time, weighted_time))
                 idx += 1
             if (cumulative_time >= TIME_LIMIT) or (idx >= DATA_LIMIT):
                 break
-            
+
     # Print the result
     print("Join time: {}s".format(cumulative_time))
     log.write("Total joined tuples fetched: %d\n" % (fetched_count))
@@ -141,10 +144,10 @@ def cursor_server(conn, Query):
     with open(result_log, 'a') as log:
         log.write("======================================================== \n")
         log.write("Time of the test run: " + str(datetime.datetime.now()) + '\n')
-        
+
         test_results = []
         for i in range(TEST_NUMBER):
-            
+
             log.write(Query + " #" + str(i + 1) + '\n')
             # Create a server-side cursor object
             with conn.cursor(name='cur_uniq') as server_cur:
@@ -155,7 +158,7 @@ def cursor_server(conn, Query):
                 start_time = time()
                 # Execute the query
                 server_cur.execute(Query)
-                
+
                 # Process for join query
                 log.write("  Time before executing: %f sec\n" % (time() - start_time))
                 result = join_query(server_cur, log, ITER_SIZE)
@@ -166,7 +169,7 @@ def cursor_server(conn, Query):
 # Summarize results over multiple tests
 def summary_tests(summary, test_results, Query):
     summary.write("\tQuery: %s\n" % (Query))
-    
+
     minLenRun = sys.maxsize
     for i in range(len(test_results)):
         minLenRun = min(minLenRun, len(test_results[i]))
@@ -183,7 +186,7 @@ def summary_tests(summary, test_results, Query):
         avg_weighted_time = weighted_sum / len(test_results)
         summary.write("K val:%i\tExecution time (unweighted): %f\tExecution time (weighted): %f\n"
                       % (tuples, avg_unweighted_time, avg_weighted_time))
-        
+
         if tuples not in avg_test_results:
             avg_test_results[tuples] = {}
             avg_test_results[tuples]['unweighted'] = []
@@ -238,9 +241,6 @@ if __name__ == '__main__':
     summary = open(result_summary, 'w+')
     
     try:
-        #conn = psycopg2.connect(dbname=DATABASE, user=USER, host=HOST, port=PORT)
-        #conn.autocommit = True
-
         for retries_global in range(MAX_GLOBAL_RETRIES):
             try:
                 # Connect to your PostgreSQL database
