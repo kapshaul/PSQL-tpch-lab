@@ -5,16 +5,17 @@
 
 # Define the path variables
 path_1="test"
-path_2="OSL(L100_N500_M5000)"
+path_2="testing"
 
 # Define the query and index arrays
-queries=("Q9" "Q10" "Q11" "Q15" "Q8" "Q9_3R")
-indexes=("0" "1" "1_5")
+queries=("Q9" "Q10" "Q11" "Q15")
+z_values=("0" "1" "1_5")
+
 
 # Loop through each query
 for query in "${queries[@]}"; do
     # Determine the relation based on the query
-    if [[ "$query" == "Q8" || "$query" == "Q9_3R" || "$query" == "Q2" || "$query" == "Q3" || "$query" == "Q5" ]]; then
+    if [[ "$query" == "Q8" || "$query" == "Q9_3R" || "$query" == "Q2" || "$query" == "Q3" || "$query" == "Q5" || "$query" == "test" ]]; then
         relation="3R"
     else
         relation="2R"
@@ -28,7 +29,7 @@ for query in "${queries[@]}"; do
     fi
     
     # Loop through each index
-    for index in "${indexes[@]}"; do
+    for index in "${z_values[@]}"; do
 
         # Use "15" for query_path if the query is "1_5"
         if [[ "$index" == "1_5" ]]; then
@@ -48,5 +49,3 @@ for query in "${queries[@]}"; do
         python /data/leeyongh-psql/Experiment/script_experiment.py "$full_path" "$index" "$query"
     done
 done
-
-
