@@ -67,37 +67,37 @@ def construct_join_queries(val):
     for sch_val in sch_vals:
         if str(sys.argv[3]) == 'Q9':
             # Q9 - TPCH
-            queries.append("select * from partsupp1%s%s, lineitem1%s%s where ps_partkey = l_partkey LIMIT 240000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from partsupp1{schema}{value}, lineitem1{schema}{value} where ps_partkey = l_partkey LIMIT 240000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q10':
             # Q10 - TPCH
-            queries.append("select * from customer1%s%s, order1%s%s where c_custkey = o_custkey LIMIT 15000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from customer1{schema}{value}, order1{schema}{value} where c_custkey = o_custkey LIMIT 15000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q11':
             # Q11(Modified) - TPCH
-            queries.append("select * from order1%s%s, lineitem1%s%s where o_orderdate = l_shipdate LIMIT 13000000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from order1{schema}{value}, lineitem1{schema}{value} where o_orderdate = l_shipdate LIMIT 13000000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q12':
             # Q12 - TPCH
-            queries.append("select * from order1%s%s, lineitem1%s%s where o_orderkey = l_orderkey LIMIT 60000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from order1{schema}{value}, lineitem1{schema}{value} where o_orderkey = l_orderkey LIMIT 60000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q15':
             # Q15 - TPCH
-            queries.append("select * from supplier1%s%s, lineitem1%s%s where s_suppkey = l_suppkey LIMIT 60000;" % (sch_val, val, sch_val, val))
+            queries.append("select * from supplier1{schema}{value}, lineitem1{schema}{value} where s_suppkey = l_suppkey LIMIT 60000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q2':
             # Q2 - TPCH
-            queries.append("select * from part1%s%s, supplier1%s%s, partsupp1%s%s where p_partkey = ps_partkey and s_suppkey = ps_suppkey LIMIT 8000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from part1{schema}{value}, supplier1{schema}{value}, partsupp1{schema}{value} where p_partkey = ps_partkey and s_suppkey = ps_suppkey LIMIT 8000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q3':
             # Q3 - TPCH
-            queries.append("select * from customer1%s%s, order1%s%s, lineitem1%s%s where c_custkey = o_custkey and o_orderkey = l_orderkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from customer1{schema}{value}, order1{schema}{value}, lineitem1{schema}{value} where c_custkey = o_custkey and o_orderkey = l_orderkey LIMIT 60000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q5':
             # Q5 - TPCH
-            queries.append("select * from order1%s%s, supplier1%s%s, lineitem1%s%s where s_suppkey = l_suppkey and o_orderkey = l_orderkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from order1{schema}{value}, supplier1{schema}{value}, lineitem1{schema}{value} where s_suppkey = l_suppkey and o_orderkey = l_orderkey LIMIT 60000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q8':
             # Q8 - TPCH
-            queries.append("select * from part1%s%s, supplier1%s%s, lineitem1%s%s where p_partkey = l_partkey and s_suppkey = l_suppkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from part1{schema}{value}, supplier1{schema}{value}, lineitem1{schema}{value} where p_partkey = l_partkey and s_suppkey = l_suppkey LIMIT 60000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'Q9_3R':
             # Q9_3R - TPCH
-            queries.append("select * from supplier1%s%s, partsupp1%s%s, lineitem1%s%s where s_suppkey = l_suppkey and ps_suppkey = l_suppkey LIMIT 4800000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from supplier1{schema}{value}, partsupp1{schema}{value}, lineitem1{schema}{value} where s_suppkey = l_suppkey and ps_suppkey = l_suppkey LIMIT 4800000;".format(schema=sch_val, value=val))
         elif str(sys.argv[3]) == 'test':
             # test - TPCH
-            queries.append("select * from part1%s%s, supplier1%s%s, lineitem1%s%s where l_suppkey = s_suppkey and l_partkey = p_partkey LIMIT 60000;" % (sch_val, val, sch_val, val, sch_val, val))
+            queries.append("select * from part1{schema}{value}, supplier1{schema}{value}, lineitem1{schema}{value} where l_suppkey = s_suppkey and l_partkey = p_partkey LIMIT 60000;".format(schema=sch_val, value=val))
         else:
             sys.exit(1)
     return queries
